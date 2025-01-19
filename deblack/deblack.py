@@ -49,7 +49,7 @@ def construct_ffmpeg_trim_cmd(timepairs, inpath, outpath, has_audio=True):
 
     cmd.extend(["-c:v", "libx264", "-crf", "18"])
     if has_audio:
-        cmd.extend(["-c:a", "flac"])
+        cmd.extend(["-c:a", "aac"])
 
     cmd.extend(["-y", "-filter_complex"])
 
