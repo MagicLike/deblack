@@ -19,8 +19,39 @@ def delete_back2back(l):
     return [x[0] for x in groupby(l)]
 
 
+def get_bitrate(inpath):
+    cmd = ["ffprobe", "-i", inpath, "-show_entries", "stream=bit_rate", "-of", "default=nw=1", "-v", "quiet"]
+    output = subprocess.check_output(cmd).decode("utf-8")
+    video_bitrate = None
+    audio_bitrate = None
+    for line in output.split("\n"):
+        if "bit_rate=" in line:
+            if "Stream #0:0" in output and "Stream #0:1" in output:
+                if "Stream #0:0" in line:
+                    video_bitrate = int(line.split("=")[1].strip())
+                elif "Stream #0:1" in line:
+                    audio_bitrate = int(line.split("=")[1].strip())
+            elif "Stream #0:0" in output:
+                video_bitrate = int(line.split("=")[1].strip())
+            elif "Stream #0:1" in output:
+                audio_bitrate = int(line.split("=")[1].strip())
+    return video_bitrate, audio_bitrate
+
+
 def construct_ffmpeg_trim_cmd(timepairs, inpath, outpath, has_audio=True):
-    cmd = ["ffmpeg", "-i", inpath, "-y", "-filter_complex"]
+    video_bitrate, audio_bitrate = get_bitrate(inpath)
+    cmd = ["ffmpeg", "-i", inpath]
+
+    if video_bitrate:
+        cmd.extend(["-b:v", str(video_bitrate)])
+    if has_audio and audio_bitrate:
+        cmd.extend(["-b:a", str(audio_bitrate)])
+
+    cmd.extend(["-c:v", "libx264", "-crf", "18"])
+    if has_audio:
+        cmd.extend(["-c:a", "flac"])
+
+    cmd.extend(["-y", "-filter_complex"])
 
     filter_str = ""
     for i, (start, end) in enumerate(timepairs):
