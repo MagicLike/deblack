@@ -69,7 +69,8 @@ def construct_ffmpeg_trim_cmd(timepairs, inpath, outpath, has_audio=True):
     cmd.append(filter_str)
 
     cmd.extend(["-map", "[outv]"])
-    cmd.extend(["-map", "[outa]"] if has_audio else [])
+    if has_audio:
+        cmd.extend(["-map", "[outa]"])
     cmd.append(outpath)
 
     return cmd
@@ -95,7 +96,7 @@ def get_blackdetect(inpath, invert=False):
     assert len(times), "no black detected"
 
     # Handle video ending with black by adding "duration" as last trim if needed
-    if len(times) % 2 != 0:
+    if len(times) % 2!= 0:
         video_length_cmd = ["ffprobe", "-i", inpath, "-show_entries", "format=duration", "-of", "csv=p=0", "-v", "quiet"]
         video_length_str = subprocess.check_output(video_length_cmd).decode("utf-8")
         video_length = float(video_length_str)
@@ -109,6 +110,7 @@ def get_blackdetect(inpath, invert=False):
 
 
 def main():
+    
     def str2bool(v):
         if isinstance(v, bool):
             return v
@@ -138,7 +140,7 @@ def main():
     if args.audio == "auto":
         try:
             cmd = ["ffprobe", "-i", args.input, "-show_streams", "-select_streams", "a", "-loglevel", "error"]
-            args.audio = subprocess.check_output(cmd).decode("utf-8").strip() != ""
+            args.audio = subprocess.check_output(cmd).decode("utf-8").strip()!= ""
         except Exception as e:
             print(e, "Failed to detect audio, assuming no audio. Use --audio to override.")
     else:
@@ -154,3 +156,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
